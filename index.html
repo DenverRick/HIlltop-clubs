@@ -13,19 +13,37 @@
   </header>
 
   <main>
-    <input class="search-bar" id="search" type="search" placeholder="Search clubs by name, tag, or keyword…" autocomplete="off" />
+    <section class="hero">
+      <h2>Find your club at Hilltop</h2>
+      <p class="lead">Forty-plus resident clubs — sports, cards, arts, learning, service, and a lot of fun. Browse by category or search for one you've heard about.</p>
+      <div class="stats" id="stats" hidden>
+        <span><strong id="stat-clubs">0</strong> clubs</span>
+        <span><strong>8</strong> categories</span>
+      </div>
+      <div class="search-wrap">
+        <input class="search-bar" id="search" type="search" placeholder="Search clubs by name, tag, or keyword…" autocomplete="off" />
+      </div>
+    </section>
 
     <div id="search-results" hidden>
-      <h2>Search results</h2>
+      <div class="section-head"><h3>Search results</h3></div>
       <div class="grid" id="search-grid"></div>
     </div>
 
-    <div id="categories-view">
-      <h2>Browse by category</h2>
+    <section id="categories-view">
+      <div class="section-head"><h3>Browse by category</h3></div>
       <div class="grid grid-3" id="category-grid">
         <div class="loading">Loading…</div>
       </div>
-    </div>
+    </section>
+
+    <section id="featured-view" hidden>
+      <div class="section-head">
+        <h3>Recently updated</h3>
+        <span class="hint">Fresh from the club leaders</span>
+      </div>
+      <div class="grid grid-3" id="featured-grid"></div>
+    </section>
   </main>
 
   <footer class="site-footer">
@@ -38,32 +56,77 @@
     const escape = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 
     let allClubs = null;
-
-    async function loadCategories() {
-      const grid = $('#category-grid');
-      try {
-        const { categories } = await ClubsAPI.getCategories();
-        if (!categories.length) {
-          grid.innerHTML = '<div class="empty">No categories yet.</div>';
-          return;
-        }
-        grid.innerHTML = categories.map((c) => `
-          <a class="card" href="/category/${encodeURIComponent(c.slug)}">
-            <div class="icon">${escape(c.icon)}</div>
-            <div class="name">${escape(c.name)}</div>
-            <div class="blurb">${escape(c.description)}</div>
-          </a>
-        `).join('');
-      } catch (err) {
-        grid.innerHTML = `<div class="error">${escape(err.message)}</div>`;
-      }
-    }
+    let categoriesByName = new Map();
 
     async function ensureAllClubs() {
       if (allClubs) return allClubs;
       const { clubs } = await ClubsAPI.getAllClubs();
       allClubs = clubs;
       return clubs;
+    }
+
+    async function loadLanding() {
+      const catGrid = $('#category-grid');
+      try {
+        // Fetch categories and clubs in parallel — both are small, and we need
+        // both before we can render counts on the category cards.
+        const [{ categories }, clubs] = await Promise.all([
+          ClubsAPI.getCategories(),
+          ensureAllClubs(),
+        ]);
+        categoriesByName = new Map(categories.map((c) => [c.name, c]));
+
+        // Tally clubs per category by name.
+        const counts = new Map();
+        for (const c of clubs) counts.set(c.category, (counts.get(c.category) || 0) + 1);
+
+        // Hero stats.
+        $('#stat-clubs').textContent = clubs.length;
+        $('#stats').hidden = false;
+
+        if (!categories.length) {
+          catGrid.innerHTML = '<div class="empty">No categories yet.</div>';
+          return;
+        }
+
+        catGrid.innerHTML = categories.map((c) => {
+          const n = counts.get(c.name) || 0;
+          return `
+            <a class="card category-card" href="/category/${encodeURIComponent(c.slug)}">
+              <div class="row">
+                <div class="icon">${escape(c.icon)}</div>
+                <span class="count ${n === 0 ? 'zero' : ''}">${n} ${n === 1 ? 'club' : 'clubs'}</span>
+              </div>
+              <div class="name">${escape(c.name)}</div>
+              <div class="blurb">${escape(c.description)}</div>
+            </a>
+          `;
+        }).join('');
+
+        renderFeatured(clubs);
+      } catch (err) {
+        catGrid.innerHTML = `<div class="error">${escape(err.message)}</div>`;
+      }
+    }
+
+    function renderFeatured(clubs) {
+      // Most-recently-updated three. Falls back to first three if no timestamps.
+      const ranked = clubs.slice().sort((a, b) => {
+        const ta = a.lastUpdated ? Date.parse(a.lastUpdated) : 0;
+        const tb = b.lastUpdated ? Date.parse(b.lastUpdated) : 0;
+        return tb - ta;
+      }).slice(0, 3);
+      if (ranked.length < 2) return;
+      const grid = $('#featured-grid');
+      grid.innerHTML = ranked.map((c) => `
+        <a class="card" href="/club/${encodeURIComponent(c.slug)}">
+          ${c.thumbnail ? `<img class="thumbnail" src="${escape(c.thumbnail)}" alt="" />` : ''}
+          <div class="name">${escape(c.name)}</div>
+          <div class="blurb">${escape(c.blurb)}</div>
+          ${(c.meetingDay || c.meetingTime) ? `<div class="meeting">${escape([c.meetingDay, c.meetingTime].filter(Boolean).join(' · '))}</div>` : ''}
+        </a>
+      `).join('');
+      $('#featured-view').hidden = false;
     }
 
     function matchClub(club, q) {
@@ -106,7 +169,7 @@
       searchTimer = setTimeout(() => runSearch(q), 150);
     });
 
-    loadCategories();
+    loadLanding();
   </script>
 </body>
 </html>
