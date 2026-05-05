@@ -41,6 +41,7 @@ export async function handler(event) {
       tags: f['Tags'] || [],
       meetingFrequency: f['Meeting Frequency'] || '',
       meetingDay: f['Meeting Day'] || '',
+      meetingSchedule: f['Meeting Schedule'] || '',
       meetingTime: f['Meeting Time'] || '',
       meetingLocation: f['Meeting Location'] || '',
       memberCount: f['Member Count'] ?? null,

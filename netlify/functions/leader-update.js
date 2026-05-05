@@ -8,6 +8,7 @@ const ALLOWED_FIELDS = new Set([
   'Tags',
   'Meeting Frequency',
   'Meeting Day',
+  'Meeting Schedule',
   'Meeting Time',
   'Meeting Location',
   'Member Count',

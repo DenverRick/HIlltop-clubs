@@ -89,11 +89,19 @@
         catLink.href = cat ? `/category/${encodeURIComponent(cat.slug)}` : '/';
         document.title = `${club.name} — Hilltop Clubs`;
 
+        // If the leader filled in the free-text "Meeting Schedule" override
+        // (e.g. "3rd Wednesday of each month"), show one wider "When" cell
+        // instead of the structured Frequency + Day pair.
+        const scheduleCells = club.meetingSchedule
+          ? [['📅', 'When', club.meetingSchedule]]
+          : [
+              ['📅', 'Frequency', club.meetingFrequency],
+              ['🗓', 'Day',       club.meetingDay],
+            ];
         const meetingCells = [
-          ['📅', 'Frequency', club.meetingFrequency],
-          ['🗓', 'Day',       club.meetingDay],
-          ['🕐', 'Time',      club.meetingTime],
-          ['📍', 'Location',  club.meetingLocation],
+          ...scheduleCells,
+          ['🕐', 'Time',     club.meetingTime],
+          ['📍', 'Location', club.meetingLocation],
         ].filter(([, , v]) => v);
 
         const videos = (club.youtubeUrls || []).map(youtubeId).filter(Boolean);

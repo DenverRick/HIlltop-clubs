@@ -65,6 +65,10 @@
         </select>
       </label>
 
+      <label>Meeting schedule (optional override of Frequency + Day, e.g. "3rd Wednesday of each month")
+        <input id="Meeting Schedule" type="text" placeholder="3rd Wednesday of each month" />
+      </label>
+
       <label>Meeting time
         <input id="Meeting Time" type="text" placeholder="7:00 PM" />
       </label>
@@ -104,7 +108,7 @@
     // Member Count needs to be a number; everything else is a string.
     const STRING_FIELDS = [
       'Short Blurb', 'Long Description', 'Vibe / Demographics',
-      'Meeting Frequency', 'Meeting Day', 'Meeting Time', 'Meeting Location',
+      'Meeting Frequency', 'Meeting Day', 'Meeting Schedule', 'Meeting Time', 'Meeting Location',
       'YouTube URLs', 'External Website', 'TeamReach',
     ];
 
