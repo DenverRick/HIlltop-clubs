@@ -33,6 +33,15 @@
     const slug = params.get('slug') || fromPath;
     const detail = $('#detail');
 
+    // Airtable URL fields sometimes hold bare hostnames like "example.org" with no
+    // scheme; the browser would then treat them as relative paths. Force an https
+    // prefix unless the value already has one (or is mailto:/tel:).
+    function externalUrl(url) {
+      const v = String(url || '').trim();
+      if (!v) return '';
+      return /^(https?:|mailto:|tel:)/i.test(v) ? v : `https://${v}`;
+    }
+
     function youtubeId(url) {
       try {
         const u = new URL(url);
@@ -108,7 +117,7 @@
             </div>` : ''}
           <div style="margin-top:1.5rem; display:flex; gap:0.75rem; flex-wrap:wrap;">
             <button class="btn btn-primary" id="interest-btn" type="button">I'm interested</button>
-            ${club.website ? `<a class="btn btn-secondary" href="${escape(club.website)}" target="_blank" rel="noopener">Visit website</a>` : ''}
+            ${club.website ? `<a class="btn btn-secondary" href="${escape(externalUrl(club.website))}" target="_blank" rel="noopener">Visit website</a>` : ''}
           </div>
         `;
         $('#interest-btn').addEventListener('click', onInterestClick);
