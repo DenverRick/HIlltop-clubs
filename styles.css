@@ -109,6 +109,32 @@ header.site-header .tagline {
 }
 .hero .search-bar:focus { box-shadow: 0 4px 24px rgba(74, 144, 226, 0.22); }
 
+/* Bottom search bar — quieter than the hero, but a clear convenience for users
+   who scroll to the bottom and want to search without going back up. */
+.search-bottom {
+  margin-top: 2.5rem;
+  padding: 1.5rem;
+  background: white;
+  border-radius: var(--radius);
+  border: 1px solid var(--gray-light);
+}
+.search-bottom .section-head { margin-bottom: 0.75rem; }
+.search-bottom .search-wrap { max-width: 38rem; margin: 0 auto; position: relative; }
+.search-bottom .search-wrap::before {
+  content: "🔍";
+  position: absolute;
+  left: 1rem;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 1.1rem;
+  pointer-events: none;
+  opacity: 0.6;
+}
+.search-bottom .search-bar {
+  margin: 0;
+  padding-left: 2.75rem;
+}
+
 /* Section heading used between hero, categories, featured, etc. */
 .section-head {
   display: flex;
@@ -286,9 +312,9 @@ h3 { font-size: 1.2rem; margin: 0 0 0.5rem; }
   margin-top: 0.1rem;
 }
 
-/* "New" badge — green to distinguish from the warm "Recently updated" chip.
-   Used on featured, search, and category cards for clubs added in the last 30 days. */
-.new-chip {
+/* "Updated" badge — green, signals a freshly maintained listing
+   (added or edited in the last 14 days). */
+.updated-chip {
   align-self: flex-start;
   background: #ecfdf5;
   color: #047857;

@@ -15,7 +15,7 @@
   <main>
     <section class="hero">
       <div class="search-wrap">
-        <input class="search-bar" id="search" type="search" placeholder="Search clubs by name or keyword…" autocomplete="off" />
+        <input class="search-bar search-input" id="search" type="search" placeholder="Search clubs by name or keyword…" autocomplete="off" />
       </div>
       <p class="opt-in-note">An opt-in directory — not every Hilltop club is listed yet. Leaders can opt in any time.</p>
       <div class="stats" id="stats" hidden>
@@ -29,6 +29,14 @@
       <div class="grid" id="search-grid"></div>
     </div>
 
+    <section id="featured-view" hidden>
+      <div class="section-head">
+        <h3>Featured this week</h3>
+        <span class="hint">A new rotation every week</span>
+      </div>
+      <div class="grid grid-3" id="featured-grid"></div>
+    </section>
+
     <section id="categories-view">
       <div class="section-head"><h3>Browse by category</h3></div>
       <div class="grid grid-3" id="category-grid">
@@ -36,12 +44,11 @@
       </div>
     </section>
 
-    <section id="featured-view" hidden>
-      <div class="section-head">
-        <h3>Recently updated</h3>
-        <span class="hint">Fresh from the club leaders</span>
+    <section class="search-bottom" id="search-bottom-view">
+      <div class="section-head"><h3>Looking for something specific?</h3></div>
+      <div class="search-wrap">
+        <input class="search-bar search-input" id="search-bottom" type="search" placeholder="Search clubs by name or keyword…" autocomplete="off" />
       </div>
-      <div class="grid grid-3" id="featured-grid"></div>
     </section>
   </main>
 
@@ -54,12 +61,24 @@
   <script>
     const $ = (sel) => document.querySelector(sel);
     const escape = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-    const NEW_WINDOW_MS = 30 * 24 * 60 * 60 * 1000;
-    const isNewClub = (createdTime) => createdTime ? (Date.now() - Date.parse(createdTime)) < NEW_WINDOW_MS : false;
-    function cardChip(club, { allowFeatured = false } = {}) {
-      if (isNewClub(club.createdTime)) return '<span class="new-chip">New</span>';
-      if (allowFeatured) return '<span class="featured-chip">Recently updated</span>';
+    const UPDATED_WINDOW_MS = 14 * 24 * 60 * 60 * 1000;
+    const wasRecentlyUpdated = (lastUpdated) => lastUpdated ? (Date.now() - Date.parse(lastUpdated)) < UPDATED_WINDOW_MS : false;
+    function cardChip(club) {
+      if (wasRecentlyUpdated(club.lastUpdated)) return '<span class="updated-chip">Updated</span>';
       return '';
+    }
+    // Deterministic weekly rotation. Sort by id for a stable order across visitors,
+    // then walk forward by `count` slots each week so every active club gets a turn.
+    function pickFeatured(clubs, count = 3) {
+      if (!clubs.length) return [];
+      const ordered = clubs.slice().sort((a, b) => (a.id || a.slug || '').localeCompare(b.id || b.slug || ''));
+      const week = Math.floor(Date.now() / (7 * 24 * 60 * 60 * 1000));
+      const start = (week * count) % ordered.length;
+      const out = [];
+      for (let i = 0; i < count && i < ordered.length; i++) {
+        out.push(ordered[(start + i) % ordered.length]);
+      }
+      return out;
     }
     // Card meeting line: prefer the free-text Meeting Schedule override
     // (e.g. "3rd Wednesday of each month") over structured day, then append
@@ -130,18 +149,13 @@
     }
 
     function renderFeatured(clubs) {
-      // Most-recently-updated three. Falls back to first three if no timestamps.
-      const ranked = clubs.slice().sort((a, b) => {
-        const ta = a.lastUpdated ? Date.parse(a.lastUpdated) : 0;
-        const tb = b.lastUpdated ? Date.parse(b.lastUpdated) : 0;
-        return tb - ta;
-      }).slice(0, 3);
+      const ranked = pickFeatured(clubs, 3);
       if (ranked.length < 2) return;
       const grid = $('#featured-grid');
       grid.innerHTML = ranked.map((c) => `
         <a class="card featured-card" href="/club/${encodeURIComponent(c.slug)}">
           ${c.thumbnail ? `<img class="thumbnail" src="${escape(c.thumbnail)}" alt="" />` : '<div class="thumbnail thumbnail-placeholder" aria-hidden="true">📌</div>'}
-          ${cardChip(c, { allowFeatured: true })}
+          ${cardChip(c)}
           <div class="name">${escape(c.name)}</div>
           <div class="blurb">${escape(c.blurb)}</div>
           ${meetingLineHTML(c)}
@@ -157,10 +171,18 @@
 
     async function runSearch(q) {
       const view = $('#categories-view');
+      const featured = $('#featured-view');
       const results = $('#search-results');
       const grid = $('#search-grid');
-      if (!q) { results.hidden = true; view.hidden = false; return; }
+      if (!q) {
+        results.hidden = true;
+        view.hidden = false;
+        // Restore featured row only if it had any cards rendered.
+        featured.hidden = !featured.querySelector('.card');
+        return;
+      }
       view.hidden = true;
+      featured.hidden = true;
       results.hidden = false;
       grid.innerHTML = '<div class="loading">Searching…</div>';
       try {
@@ -184,11 +206,22 @@
       }
     }
 
+    // Both top and bottom search inputs share state. Typing in either
+    // syncs the other and re-runs the search. The bottom input also
+    // scrolls to the results section so the user sees feedback.
+    const searchInputs = document.querySelectorAll('.search-input');
     let searchTimer;
-    $('#search').addEventListener('input', (e) => {
-      clearTimeout(searchTimer);
-      const q = e.target.value.trim().toLowerCase();
-      searchTimer = setTimeout(() => runSearch(q), 150);
+    searchInputs.forEach((input) => {
+      input.addEventListener('input', (e) => {
+        const raw = e.target.value;
+        searchInputs.forEach((other) => { if (other !== input) other.value = raw; });
+        clearTimeout(searchTimer);
+        const q = raw.trim().toLowerCase();
+        searchTimer = setTimeout(() => runSearch(q), 150);
+        if (input.id === 'search-bottom' && q) {
+          $('#search-results').scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+      });
     });
 
     loadLanding();

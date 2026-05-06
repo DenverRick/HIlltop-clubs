@@ -29,14 +29,14 @@
   <script>
     const $ = (sel) => document.querySelector(sel);
     const escape = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-    const NEW_WINDOW_MS = 30 * 24 * 60 * 60 * 1000;
-    const isNewClub = (createdTime) => createdTime ? (Date.now() - Date.parse(createdTime)) < NEW_WINDOW_MS : false;
+    const UPDATED_WINDOW_MS = 14 * 24 * 60 * 60 * 1000;
+    const wasRecentlyUpdated = (lastUpdated) => lastUpdated ? (Date.now() - Date.parse(lastUpdated)) < UPDATED_WINDOW_MS : false;
     const DAYS = [
       ['Monday', 'Mon'], ['Tuesday', 'Tue'], ['Wednesday', 'Wed'],
       ['Thursday', 'Thu'], ['Friday', 'Fri'], ['Saturday', 'Sat'], ['Sunday', 'Sun'],
     ];
     function cardChip(club) {
-      if (isNewClub(club.createdTime)) return '<span class="new-chip">New</span>';
+      if (wasRecentlyUpdated(club.lastUpdated)) return '<span class="updated-chip">Updated</span>';
       return '';
     }
     function meetingLineHTML(club) {
