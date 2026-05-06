@@ -15,8 +15,14 @@
   <main>
     <p>
       Pick your club, enter the email address management has on file for you
-      (this is how we verify it's really you), then update any of the fields
-      below. Only your own row can be edited.
+      (this is how we verify it's really you), then edit any of the fields
+      below. The form pre-fills with what's currently on your page — just
+      change what you want updated and leave the rest. Only your own row
+      can be edited.
+    </p>
+    <p class="helper-note">
+      Note: leaving a field blank keeps the existing value (it doesn't erase it).
+      If you actually want to clear a field, email Rick.
     </p>
 
     <form class="leader-form" id="leader-form">
@@ -134,6 +140,44 @@
         sel.innerHTML = `<option value="">Error: ${err.message}</option>`;
       }
     }
+
+    // Pre-populate the form with the club's current public values so leaders
+    // can edit-in-place rather than retype everything. All fields shown here
+    // are already public on the club's detail page (Leader Email is not in
+    // the form), so this is not a sensitive disclosure. Email-match still
+    // gates the actual save.
+    function clearFormFields() {
+      const ids = ['Short Blurb', 'Long Description', 'Vibe / Demographics', 'Tags',
+        'Meeting Frequency', 'Meeting Day', 'Meeting Schedule', 'Meeting Time',
+        'Meeting Location', 'Next Meeting', 'Member Count', 'YouTube URLs',
+        'External Website', 'TeamReach'];
+      for (const id of ids) document.getElementById(id).value = '';
+    }
+    async function loadCurrentValues(slug) {
+      if (!slug) { clearFormFields(); return; }
+      setStatus('success', 'Loading current values…');
+      try {
+        const { club } = await ClubsAPI.getClub(slug);
+        document.getElementById('Short Blurb').value = club.blurb || '';
+        document.getElementById('Long Description').value = club.description || '';
+        document.getElementById('Vibe / Demographics').value = club.vibe || '';
+        document.getElementById('Tags').value = (club.tags || []).join(', ');
+        document.getElementById('Meeting Frequency').value = club.meetingFrequency || '';
+        document.getElementById('Meeting Day').value = club.meetingDay || '';
+        document.getElementById('Meeting Schedule').value = club.meetingSchedule || '';
+        document.getElementById('Meeting Time').value = club.meetingTime || '';
+        document.getElementById('Meeting Location').value = club.meetingLocation || '';
+        document.getElementById('Next Meeting').value = club.nextMeeting || '';
+        document.getElementById('Member Count').value = club.memberCount ?? '';
+        document.getElementById('YouTube URLs').value = (club.youtubeUrls || []).join('\n');
+        document.getElementById('External Website').value = club.website || '';
+        document.getElementById('TeamReach').value = club.teamReach || '';
+        $('#status').hidden = true;
+      } catch (err) {
+        setStatus('error', `Couldn't load current values: ${err.message}`);
+      }
+    }
+    $('#slug').addEventListener('change', (ev) => loadCurrentValues(ev.target.value.trim()));
 
     function setStatus(kind, message) {
       const el = $('#status');

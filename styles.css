@@ -572,6 +572,15 @@ form.leader-form input:focus, form.leader-form select:focus, form.leader-form te
   outline: none;
   border-color: var(--primary-color);
 }
+.helper-note {
+  font-size: 0.9rem;
+  color: var(--gray);
+  background: #f1f5f9;
+  border-left: 3px solid var(--gray-light);
+  padding: 0.6rem 0.85rem;
+  border-radius: 6px;
+  margin: 0.5rem 0 1rem;
+}
 .form-status { padding: 0.75rem; border-radius: 8px; }
 .form-status.success { background: #ecfdf5; color: #065f46; }
 .form-status.error { background: #fef2f2; color: var(--danger); }
@@ -585,6 +594,12 @@ footer.site-footer {
 footer.site-footer .footer-link {
   color: var(--primary-color);
   text-decoration: underline;
+}
+footer.site-footer .credits {
+  margin-top: 0.6rem;
+  font-size: 0.8rem;
+  color: var(--gray);
+  opacity: 0.85;
 }
 
 /* Print styles — primarily for club detail pages. Strip site chrome and
