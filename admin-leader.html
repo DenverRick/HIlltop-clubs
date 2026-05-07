@@ -83,10 +83,6 @@
         <input id="Meeting Location" type="text" placeholder="Clubhouse Card Room" />
       </label>
 
-      <label>Next meeting date (optional — used to highlight upcoming meetings on cards)
-        <input id="Next Meeting" type="date" />
-      </label>
-
       <label>Member count (optional)
         <input id="Member Count" type="number" min="0" />
       </label>
@@ -125,7 +121,6 @@
     const STRING_FIELDS = [
       'Short Blurb', 'Long Description', 'Vibe / Demographics',
       'Meeting Frequency', 'Meeting Day', 'Meeting Schedule', 'Meeting Time', 'Meeting Location',
-      'Next Meeting',
       'YouTube URLs', 'External Website', 'TeamReach',
     ];
 
@@ -155,7 +150,7 @@
     function clearFormFields() {
       const ids = ['Short Blurb', 'Long Description', 'Vibe / Demographics', 'Tags',
         'Meeting Frequency', 'Meeting Day', 'Meeting Schedule', 'Meeting Time',
-        'Meeting Location', 'Next Meeting', 'Member Count', 'YouTube URLs',
+        'Meeting Location', 'Member Count', 'YouTube URLs',
         'External Website', 'TeamReach'];
       for (const id of ids) document.getElementById(id).value = '';
     }
@@ -173,7 +168,6 @@
         document.getElementById('Meeting Schedule').value = club.meetingSchedule || '';
         document.getElementById('Meeting Time').value = club.meetingTime || '';
         document.getElementById('Meeting Location').value = club.meetingLocation || '';
-        document.getElementById('Next Meeting').value = club.nextMeeting || '';
         document.getElementById('Member Count').value = club.memberCount ?? '';
         document.getElementById('YouTube URLs').value = (club.youtubeUrls || []).join('\n');
         // Airtable accepts schemeless URLs (e.g. "www.foo.org") but the HTML5

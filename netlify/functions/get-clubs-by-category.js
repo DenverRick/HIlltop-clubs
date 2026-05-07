@@ -52,7 +52,6 @@ export async function handler(event) {
       thumbnail: f['Thumbnail Image']?.[0]?.thumbnails?.large?.url || f['Thumbnail Image']?.[0]?.url || '',
       lastUpdated: f['Last Updated'] || null,
       createdTime: safe.createdTime || null,
-      nextMeeting: f['Next Meeting'] || null,
     };
   });
   return json(200, { clubs }, { 'Cache-Control': CACHE.CLUBS });

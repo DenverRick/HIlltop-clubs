@@ -52,7 +52,6 @@ export async function handler(event) {
       teamReach: f['TeamReach'] || '',
       lastUpdated: f['Last Updated'] || null,
       createdTime: safe.createdTime || null,
-      nextMeeting: f['Next Meeting'] || null,
     },
   }, { 'Cache-Control': CACHE.CLUBS });
 }

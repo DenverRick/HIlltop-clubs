@@ -11,7 +11,6 @@ const ALLOWED_FIELDS = new Set([
   'Meeting Schedule',
   'Meeting Time',
   'Meeting Location',
-  'Next Meeting',
   'Member Count',
   'Vibe / Demographics',
   'YouTube URLs',
